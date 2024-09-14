@@ -11,6 +11,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
+// setup two routes, one for shortening the url
+// the other for resolving the url
 func setupRoutes(app *fiber.App) {
 	app.Get("/:url", routes.ResolveURL)
 	app.Post("/api/v1", routes.ShortenURL)
