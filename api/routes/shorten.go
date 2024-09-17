@@ -11,6 +11,7 @@ import (
 	"github.com/asaskevich/govalidator"
 	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type response struct {
@@ -74,8 +75,40 @@ func ShortenURL(c *fiber.Ctx) error {
 	}
 
 	//enforce http, SSL
-
+	// all url will be converted to https before storing in database
 	body.URL = helpers.EnforceHTTP(body.URL)
+
+	// check if the user has provided any custom dhort urls
+	// if yes, proceed,
+	// else, create a new short using the first 6 digits of uuid
+	var id string
+
+	if body.CustomShort == "" {
+		id = uuid.New().String()[:6]
+	} else {
+		id = body.CustomShort
+	}
+
+	r := database.CreateClient(0)
+	defer r.Close()
+
+	val, _ = r.Get(database.Ctx, id).Result()
+	// check if the user provided short is already in use
+	if val != "" {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "URL short already in use",
+		})
+	}
+
+	if body.Expiry == 0 {
+		body.Expiry = 24
+	}
+	err = r.Set(database.Ctx, id, body.URL, body.Expiry*3600*time.Second).Err()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Unable to connect to server",
+		})
+	}
 
 	r2.Decr(database.Ctx, c.IP())
 }
