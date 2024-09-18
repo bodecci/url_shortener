@@ -19,3 +19,8 @@
 
 # Go workspace file
 go.work
+
+# redis dump
+data/dump.rdb
+
+data/dump.rdb
