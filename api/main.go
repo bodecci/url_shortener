@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"url_shortener/api/routes"
+	"url_shortener/routes"
 
 	"github.com/joho/godotenv"
 
